@@ -112,12 +112,12 @@ class RNN(object):
             record_r[i,:] = self.r
         return time, record_r, np.tanh(record_r)
 
-    def relearn(self, trials, ext, ntstart, decoder, feedback, target, delta=1.,
+    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, delta=1.,
                 wplastic=None):
         """
         Args
           self.z: RNN network's activation
-          trials (int): Number of trials to train for.
+          ntrials (int): Number of trials to train for.
           ext (np.array): stimuli (n_targets, n timesteps, n_targets)
           decoder (np.array): (N units, 2d coordinates) decoder weights
           feedback (np.array): (N units, 2d coordinates) feedback weights
@@ -138,13 +138,13 @@ class RNN(object):
         self.P = [1./delta*np.eye(len(self.W_plastic[i])) for i in range(len(self.W_plastic))]
 
         # create n trials of target indices chosen from 0 to 5
-        order = np.random.choice(range(ext.shape[0]), trials, replace=True)
+        order = np.random.choice(range(ext.shape[0]), ntrials, replace=True)
 
         # initialize calculated loss per trial
-        record_loss = np.zeros(trials)
+        record_loss = np.zeros(ntrials)
 
         # loop over trials
-        for t in tqdm(range(trials)):
+        for t in tqdm(range(ntrials)):
 
             # initialize loss
             loss = 0.
@@ -189,30 +189,15 @@ class RNN(object):
             record_loss[t] = loss
         return record_loss
 
-    def calculate_manifold(self, trials, ext, ntstart):
-        tsteps = ext.shape[1]
-        T = self.dt*tsteps
-        points = (tsteps-ntstart)
-        activity = np.zeros((points*trials,self.N))
-        order = np.random.choice(range(ext.shape[0]),trials,replace=True)
-        for t in range(trials):
-            time, r, z = self.simulate(T,ext[order[t]])
-            activity[t*points:(t+1)*points,:] = z[ntstart:,:]
-        cov = np.cov(activity.T)
-        ev,evec = np.linalg.eig(cov)
-        pr = np.round(np.sum(ev.real)**2/np.sum(ev.real**2)).astype(int)
-        xi = activity @ evec.real
-        return activity,cov,ev.real,evec.real,pr,xi,order
-
-    def get_manifold(network, manifold_trials=50):
+    def get_manifold(network, ext, ntstart, ntrials=50):
         # Compute the manifold
         tsteps = ext.shape[1]
         T = self.dt*tsteps
         points = (tsteps-ntstart)
-        activity = np.zeros((points*trials,self.N))
-        order = np.random.choice(range(ext.shape[0]),trials,replace=True)
+        activity = np.zeros((points*ntrials,self.N))
+        order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
         
-        for t in range(trials): # Run a bunch of simulations
+        for t in range(ntrials): # Run a bunch of simulations
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
             
