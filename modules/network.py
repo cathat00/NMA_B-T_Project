@@ -197,13 +197,13 @@ class RNN(object):
         activity = np.zeros((points*ntrials,self.N))
         order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
         
-        for t in range(ntrials): # Run a bunch of simulations
+        for t in tqdm(range(ntrials)): # Run a bunch of simulations
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
             
         cov = np.cov(activity.T) # Compute covariance matrix of activity
-        evals,evec = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
-        manifold = activity @ evec.real # Project activity into principal component space
+        evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
+        manifold = activity @ evecs.real # Project activity into principal component space
 
         # Calculate participation ratio: a quantitative measure of how many principal
         # components are necessary to describe most of the variance in the data.
@@ -211,7 +211,7 @@ class RNN(object):
 
         results = {
             "activity":activity, "manifold":manifold, 
-            "eigenvals":evals, "eigenvecs":eigenvecs,
+            "eigenvals":evals, "eigenvecs":evecs,
             "particip_ratio":pr,
         }
         
