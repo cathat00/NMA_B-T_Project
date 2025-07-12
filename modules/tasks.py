@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 
 class MotorReachingTask(ABC):
 
-  def __init__(self, tsteps:int=200, ntargets:int=6, target_max=0.02,
+  def __init__(self, tsteps:int=200, ntargets:int=6, target_max=0.2,
                stim_length:int=20, stim_amplitude:float=1, 
                stim_is_2d:bool=False):
     # -- Time component
