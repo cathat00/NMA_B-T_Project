@@ -4,7 +4,7 @@ Collaborative RNN + Python project for Neuromatch Academy.
 
 ## 🚀 How to Run
 
-1. Open our notebook in Colab: [main_notebook.ipynb](https://colab.research.google.com/github/cathat00/NMA_B&T_Project/blob/main/notebooks/main_notebook.ipynb)
+1. Open our notebook in Colab: [main_notebook.ipynb](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/main/notebooks/main_notebook.ipynb)
 2. Run the first code cell to load helper modules.
 3. Work inside Colab as usual!
 
