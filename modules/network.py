@@ -124,8 +124,8 @@ class RNN(object):
           target: (n_targets, N timesteps, 2d coordinates) target coordinates
 
         Returns:
-
           loss (np.array): loss by trial
+          
         """
         # get number of timesteps within trial
         tsteps = ext.shape[1]
