@@ -1,3 +1,5 @@
+import numpy as np
+
 class RNN(object):
     """
     Class implementing a recurrent network (not following Dale's law).
@@ -200,15 +202,3 @@ class RNN(object):
         pr = np.round(np.sum(ev.real)**2/np.sum(ev.real**2)).astype(int)
         xi = activity @ evec.real
         return activity,cov,ev.real,evec.real,pr,xi,order
-
-def save_RNN(network, savedir:str):
-  """write RNN object and weights in savedir
-  """
-  network.save(savedir+'network')
-  np.save(savedir+'W_initial', network.W)
-
-def save_RNN_sinewave(network, savedir:str):
-  """write RNN sinewave object and weights in savedir
-  """
-  network.save(savedir + 'network_sinewave')
-  np.save(savedir + 'W_initial_sinewave', network.W)
