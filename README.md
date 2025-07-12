@@ -15,7 +15,10 @@ Collaborative RNN + Python project for Neuromatch Academy.
 
 ## 🛠️ Updating Modules
 
-1. Go to the module file on GitHub (e.g. `modules/rnn_core.py`)
-2. Click ✏️ (Edit)
-3. Commit changes
-4. In Colab, rerun the first cell to get the latest version
+1. Create your own branch
+2. Go to the module folder
+3. Select a file and click ✏️ (Edit)
+4. Commit changes to your branch
+5. In Colab, restart the session and rerun the first cell to get the latest version
+6. We can merge changes into main during project time
+
