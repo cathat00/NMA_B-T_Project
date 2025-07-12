@@ -47,7 +47,7 @@ class MotorReachingTask(ABC):
 # =========================
 # The basic reaching task, used by Feulner.
 
-class BasicReachingTask(MotorReachingTask)
+class BasicReachingTask(MotorReachingTask):
 
   def _create_stimuli(self):
     self.stimuli = np.zeros((self.ntargets, self.tsteps, self.ntargets))
