@@ -21,5 +21,5 @@ Collaborative RNN + Python project for Neuromatch Academy.
 4. Select a file and click ✏️ (Edit)
 5. Commit changes to your branch
 6. In Colab, restart the session and rerun the first cell to get the latest version
-7. We can merge changes into main during project time
+7. We can merge your changes into main during project time!
 
