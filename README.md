@@ -1,4 +1,4 @@
-# 🧠 NMA_B&T_Project
+# 🧠 Neuromatch Behavior + Theory Project, 2025
 
 Collaborative RNN + Python project for Neuromatch Academy.
 
