@@ -189,7 +189,7 @@ class RNN(object):
             record_loss[t] = loss
         return record_loss
 
-    def get_manifold(network, ext, ntstart, ntrials=50):
+    def get_manifold(self, network, ext, ntstart, ntrials=50):
         # Compute the manifold
         tsteps = ext.shape[1]
         T = self.dt*tsteps
