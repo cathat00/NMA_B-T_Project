@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 class RNN(object):
     """
@@ -116,6 +117,7 @@ class RNN(object):
         """
         Args
           self.z: RNN network's activation
+          trials (int): Number of trials to train for.
           ext (np.array): stimuli (n_targets, n timesteps, n_targets)
           decoder (np.array): (N units, 2d coordinates) decoder weights
           feedback (np.array): (N units, 2d coordinates) feedback weights
@@ -142,7 +144,7 @@ class RNN(object):
         record_loss = np.zeros(trials)
 
         # loop over trials
-        for t in range(trials):
+        for t in tqdm(range(trials)):
 
             # initialize loss
             loss = 0.
@@ -185,7 +187,6 @@ class RNN(object):
 
             # tape loss
             record_loss[t] = loss
-            print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
     def calculate_manifold(self, trials, ext, ntstart):
