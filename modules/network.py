@@ -150,7 +150,7 @@ class RNN(object):
         record_loss = np.zeros(ntrials)
 
         # loop over trials
-        for t in tqdm(range(ntrials), disable=not self.verbosity==1):
+        for t in tqdm(range(ntrials), disable=(not self.verbosity==1)):
 
             # initialize loss
             loss = 0.
