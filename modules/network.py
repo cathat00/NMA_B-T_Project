@@ -1,3 +1,4 @@
+# @title My RNN
 import numpy as np
 from tqdm import tqdm
 
@@ -118,8 +119,8 @@ class RNN(object):
             record_r[i,:] = self.r
         return time, record_r, np.tanh(record_r)
 
-    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, delta=1.,
-                wplastic=None):
+    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, 
+                delta=20., wplastic=None):
         """
         Args
           self.z: RNN network's activation
