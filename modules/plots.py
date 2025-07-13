@@ -50,8 +50,8 @@ def create_scree_plot(eigenvalues):
 
 def plot_manifold_and_scree(manifold_activity, eigenvalues):
   # Get the individual figures
-  manifold_fig = get_manifold_plot(manifold_activity)
-  scree_fig = get_scree_plot(eigenvalues)
+  manifold_fig = create_manifold_plot(manifold_activity)
+  scree_fig = create_scree_plot(eigenvalues)
 
   # Create subplots
   fig = make_subplots(
