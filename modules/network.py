@@ -218,8 +218,16 @@ class RNN(object):
         # components are necessary to describe most of the variance in the data.
         pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
 
+        # Reshape the activity (used in BCI tuning?)
+        new_shape = (manifold_trials, -1, network.N)
+        activity_reshaped = activity.reshape(shape=new_shape)
+        activity_proj_reshaped = activity_proj.reshape(shape=new_shape)
+
         results = {
-            "activity":activity, "activity_proj":activity_proj, 
+            "activity":activity, 
+            "activity_proj":activity_proj, 
+            "activity_reshaped":activity_reshaped,
+            "activity_proj_reshaped":activity_proj_reshaped, 
             "eigenvals":evals, "eigenvecs":evecs,
             "particip_ratio":pr,
         }
