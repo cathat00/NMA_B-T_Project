@@ -34,6 +34,5 @@ class BCI():
     reg.fit(X,Y)
 
     # make predictions
-    y = reg.predict(X)
+    self.decoder = reg.predict(X)
     mse = np.mean((y-Y)**2)
-    return reg.coef_, mse
