@@ -193,7 +193,7 @@ class RNN(object):
 
             # tape loss
             record_loss[t] = loss
-            if verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
+            if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
     def get_manifold(self, ext, ntstart, ntrials=50):
