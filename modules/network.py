@@ -230,6 +230,7 @@ class RNN(object):
             "activity_proj_reshaped":activity_proj_reshaped, 
             "eigenvals":evals, "eigenvecs":evecs,
             "particip_ratio":pr,
+            "order":order,
         }
         
         return results
