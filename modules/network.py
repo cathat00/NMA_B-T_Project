@@ -150,7 +150,7 @@ class RNN(object):
         record_loss = np.zeros(ntrials)
 
         # loop over trials
-        for t in tqdm(range(ntrials), disable=not self.verbose==1):
+        for t in tqdm(range(ntrials), disable=not self.verbosity==1):
 
             # initialize loss
             loss = 0.
@@ -193,7 +193,7 @@ class RNN(object):
 
             # tape loss
             record_loss[t] = loss
-            if verbose==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
+            if verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
     def get_manifold(self, ext, ntstart, ntrials=50):
@@ -205,7 +205,7 @@ class RNN(object):
         order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
 
         # Run a bunch of simulations
-        for t in tqdm(range(ntrials), disable=self.verbose<1):
+        for t in tqdm(range(ntrials), disable=self.verbosity<1):
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
             
