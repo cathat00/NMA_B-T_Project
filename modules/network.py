@@ -212,7 +212,7 @@ class RNN(object):
             
         cov = np.cov(activity.T) # Compute covariance matrix of activity
         evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
-        activity_proj = activity @ evecs.real # Project activity into principal component space
+        proj = activity @ evecs.real # Project activity into principal component space
 
         # Calculate participation ratio: a quantitative measure of how many principal
         # components are necessary to describe most of the variance in the data.
@@ -221,13 +221,13 @@ class RNN(object):
         # Reshape the activity (used in BCI tuning?)
         new_shape = (manifold_trials, -1, network.N)
         activity_reshaped = activity.reshape(shape=new_shape)
-        activity_proj_reshaped = activity_proj.reshape(shape=new_shape)
+        proj_reshaped = activity_proj.reshape(shape=new_shape)
 
         results = {
             "activity":activity, 
-            "activity_proj":activity_proj, 
             "activity_reshaped":activity_reshaped,
-            "activity_proj_reshaped":activity_proj_reshaped, 
+            "proj":proj, 
+            "proj_reshaped":proj_reshaped, 
             "eigenvals":evals, "eigenvecs":evecs,
             "particip_ratio":pr,
             "order":order,
