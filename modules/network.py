@@ -18,7 +18,7 @@ class RNN(object):
     * P_plastic: how many neurons are plastic in the recurrent network
     """
     def __init__(self, N=800, g=1.5, p=0.1, tau=0.1, dt=0.01,
-                 N_in=6):
+                 N_in=6, verbosity=1):
         # set parameters
         self.N = N
         self.g = g
@@ -26,6 +26,12 @@ class RNN(object):
         self.K = int(p*N)
         self.tau = tau
         self.dt = dt
+
+        # Set verbosity level
+        # 0: Generate no logs
+        # 1: Loading bar for training / manifold calc
+        # 2: Loss per iteration of training
+        self.verbosity = verbosity 
 
         # create recurrent W
         mask = np.random.rand(self.N,self.N)<self.p
@@ -144,7 +150,7 @@ class RNN(object):
         record_loss = np.zeros(ntrials)
 
         # loop over trials
-        for t in tqdm(range(ntrials)):
+        for t in tqdm(range(ntrials), disable=not self.verbose==1):
 
             # initialize loss
             loss = 0.
@@ -187,6 +193,7 @@ class RNN(object):
 
             # tape loss
             record_loss[t] = loss
+            if verbose==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
     def get_manifold(self, ext, ntstart, ntrials=50):
@@ -196,8 +203,9 @@ class RNN(object):
         points = (tsteps-ntstart)
         activity = np.zeros((points*ntrials,self.N))
         order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
-        
-        for t in tqdm(range(ntrials)): # Run a bunch of simulations
+
+        # Run a bunch of simulations
+        for t in tqdm(range(ntrials), disable=self.verbose<1):
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
             
