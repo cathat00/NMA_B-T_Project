@@ -16,7 +16,7 @@ Collaborative RNN + Python project for Neuromatch Academy.
 ## 🛠️ Updating Modules
 
 1. Create a new branch ("Branches" -> "View All Branches" -> "New Branch")
-2. Checkout your branch via the branch dropdown
+2. Select ("checkout") your branch via the branch dropdown
 3. Go to the module folder
 4. Select a file and click ✏️ (Edit)
 5. Commit changes to your branch
