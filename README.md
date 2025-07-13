@@ -1,6 +1,6 @@
 # 🧠 Neuromatch Behavior + Theory Project, 2025
 
-Collaborative RNN + Python project for Neuromatch Academy.
+Collaborative project for Neuromatch Academy.
 
 ## 🚀 How to Run
 
