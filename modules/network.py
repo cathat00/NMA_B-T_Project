@@ -220,8 +220,8 @@ class RNN(object):
 
         # Reshape the activity (used in BCI tuning?)
         new_shape = (ntrials, -1, self.N)
-        activity_reshaped = activity.reshape(shape=new_shape)
-        proj_reshaped = activity_proj.reshape(shape=new_shape)
+        activity_reshaped = activity.reshape(new_shape)
+        proj_reshaped = activity_proj.reshape(new_shape)
 
         results = {
             "activity":activity, 
