@@ -212,14 +212,14 @@ class RNN(object):
             
         cov = np.cov(activity.T) # Compute covariance matrix of activity
         evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
-        manifold = activity @ evecs.real # Project activity into principal component space
+        activity_proj = activity @ evecs.real # Project activity into principal component space
 
         # Calculate participation ratio: a quantitative measure of how many principal
         # components are necessary to describe most of the variance in the data.
         pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
 
         results = {
-            "activity":activity, "manifold":manifold, 
+            "activity":activity, "activity_proj":activity_proj, 
             "eigenvals":evals, "eigenvecs":evecs,
             "particip_ratio":pr,
         }
