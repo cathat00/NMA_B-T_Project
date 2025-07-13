@@ -219,7 +219,7 @@ class RNN(object):
         pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
 
         # Reshape the activity (used in BCI tuning?)
-        new_shape = (manifold_trials, -1, network.N)
+        new_shape = (ntrials, -1, network.N)
         activity_reshaped = activity.reshape(shape=new_shape)
         proj_reshaped = activity_proj.reshape(shape=new_shape)
 
