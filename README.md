@@ -1,6 +1,6 @@
 # 🧠 Neuromatch Behavior + Theory Project, 2025
 
-Collaborative RNN + Python project for Neuromatch Academy.
+Collaborative project for Neuromatch Academy.
 
 ## 🚀 How to Run
 
@@ -15,7 +15,11 @@ Collaborative RNN + Python project for Neuromatch Academy.
 
 ## 🛠️ Updating Modules
 
-1. Go to the module file on GitHub (e.g. `modules/rnn_core.py`)
-2. Click ✏️ (Edit)
-3. Commit changes
-4. In Colab, rerun the first cell to get the latest version
+1. Create a new branch ("Branches" -> "View All Branches" -> "New Branch")
+2. Select ("checkout") your branch via the branch dropdown
+3. Go to the module folder
+4. Select a file and click ✏️ (Edit)
+5. Commit changes to your branch
+6. In Colab, restart the session and rerun the first cell to get the latest version
+7. We can merge your changes into main during project time!
+

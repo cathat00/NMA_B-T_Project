@@ -1,4 +1,6 @@
+# @title My RNN
 import numpy as np
+from tqdm import tqdm
 
 class RNN(object):
     """
@@ -17,7 +19,7 @@ class RNN(object):
     * P_plastic: how many neurons are plastic in the recurrent network
     """
     def __init__(self, N=800, g=1.5, p=0.1, tau=0.1, dt=0.01,
-                 N_in=6):
+                 N_in=6, verbosity=1):
         # set parameters
         self.N = N
         self.g = g
@@ -25,6 +27,12 @@ class RNN(object):
         self.K = int(p*N)
         self.tau = tau
         self.dt = dt
+
+        # Set verbosity level
+        # 0: Generate no logs
+        # 1: Loading bar for training / manifold calc
+        # 2: Loss per iteration of training
+        self.verbosity = verbosity 
 
         # create recurrent W
         mask = np.random.rand(self.N,self.N)<self.p
@@ -111,19 +119,20 @@ class RNN(object):
             record_r[i,:] = self.r
         return time, record_r, np.tanh(record_r)
 
-    def relearn(self, trials, ext, ntstart, decoder, feedback, target, delta=1.,
-                wplastic=None):
+    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, 
+                delta=20., wplastic=None):
         """
         Args
           self.z: RNN network's activation
+          ntrials (int): Number of trials to train for.
           ext (np.array): stimuli (n_targets, n timesteps, n_targets)
           decoder (np.array): (N units, 2d coordinates) decoder weights
           feedback (np.array): (N units, 2d coordinates) feedback weights
           target: (n_targets, N timesteps, 2d coordinates) target coordinates
 
         Returns:
-
           loss (np.array): loss by trial
+          
         """
         # get number of timesteps within trial
         tsteps = ext.shape[1]
@@ -136,13 +145,13 @@ class RNN(object):
         self.P = [1./delta*np.eye(len(self.W_plastic[i])) for i in range(len(self.W_plastic))]
 
         # create n trials of target indices chosen from 0 to 5
-        order = np.random.choice(range(ext.shape[0]), trials, replace=True)
+        order = np.random.choice(range(ext.shape[0]), ntrials, replace=True)
 
         # initialize calculated loss per trial
-        record_loss = np.zeros(trials)
+        record_loss = np.zeros(ntrials)
 
         # loop over trials
-        for t in range(trials):
+        for t in tqdm(range(ntrials), disable=(not self.verbosity==1)):
 
             # initialize loss
             loss = 0.
@@ -185,20 +194,42 @@ class RNN(object):
 
             # tape loss
             record_loss[t] = loss
-            print('Loss in Trial %d is %.5f'%(t+1,loss))
+            if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
-    def calculate_manifold(self, trials, ext, ntstart):
+    def get_manifold(self, ext, ntstart, ntrials=50):
+        # Compute the manifold
         tsteps = ext.shape[1]
         T = self.dt*tsteps
         points = (tsteps-ntstart)
-        activity = np.zeros((points*trials,self.N))
-        order = np.random.choice(range(ext.shape[0]),trials,replace=True)
-        for t in range(trials):
+        activity = np.zeros((points*ntrials,self.N))
+        order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
+
+        # Run a bunch of simulations
+        for t in tqdm(range(ntrials), disable=self.verbosity<1):
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
-        cov = np.cov(activity.T)
-        ev,evec = np.linalg.eig(cov)
-        pr = np.round(np.sum(ev.real)**2/np.sum(ev.real**2)).astype(int)
-        xi = activity @ evec.real
-        return activity,cov,ev.real,evec.real,pr,xi,order
+            
+        cov = np.cov(activity.T) # Compute covariance matrix of activity
+        evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
+        proj = activity @ evecs.real # Project activity into principal component space
+
+        # Calculate participation ratio: a quantitative measure of how many principal
+        # components are necessary to describe most of the variance in the data.
+        pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
+
+        # Reshape the activity (used in BCI tuning?)
+        activity_reshaped = activity.reshape(ntrials, -1, self.N)
+        proj_reshaped = proj.reshape(ntrials, -1, self.N)
+
+        results = {
+            "activity":activity, 
+            "activity_reshaped":activity_reshaped,
+            "proj":proj, 
+            "proj_reshaped":proj_reshaped, 
+            "eigenvals":evals, "eigenvecs":evecs,
+            "particip_ratio":pr,
+            "order":order,
+        }
+        
+        return results
