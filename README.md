@@ -1,10 +1,14 @@
 # 🧠 Neuromatch Behavior + Theory Project, 2025
 
-Collaborative project for Neuromatch Academy.
+Collaborative project for Neuromatch Academy.\
+
+## 🧪 Notebooks
+- Base [main_notebook.ipynb](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/main/notebooks/main_notebook.ipynb)
+- Adding More Targets [more_targets.ipynb](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/main/notebooks/more_targets.ipynb)
 
 ## 🚀 How to Run
 
-1. Open our notebook in Colab: [main_notebook.ipynb](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/main/notebooks/main_notebook.ipynb)
+1. Open one of our notebooks in Colab.
 2. Run the first code cell to load helper modules.
 3. Work inside Colab as usual!
 
