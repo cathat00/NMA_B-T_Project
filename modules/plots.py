@@ -1,4 +1,5 @@
 from plotly.subplots import make_subplots
+import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
@@ -23,7 +24,7 @@ def save_figs(figs, filepath, overwrite=False):
 
   # -- Write to HTML file
   with open(filepath, 'a') as f:
-    for fig in all_figs:
+    for fig in figs:
       f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
 
@@ -31,37 +32,43 @@ def save_figs(figs, filepath, overwrite=False):
 # == MANIFOLD / PCA SUMMARY PLOT ==
 # =================================
 
-def plot_pca_summary(manifold, eigenvalues, eigenval_thresh=0.9):
+def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
 
-    # -- Get time component from manifold 
-    t = np.arange(manifold.shape[0])
+    # -- Projected data shape should be (trials, time, n_pcs)
+    n_trials, n_tsteps, n_pcs = proj.shape
+    t = np.arange(n_tsteps)
 
     # -- Calculate variance explained
     explained_variance = eigenvalues / np.sum(eigenvalues)
     cumulative_variance = np.cumsum(explained_variance)
+    total_under_thresh = np.count_nonzero(cumulative_variance < eigenval_thresh)
     
     # -- Initialize subplots
-    suplot_names = ['Activity Projected Onto Manifold', 'Variance Explained Plot']
+    suplot_names = [
+        f'Activity Projected Onto Manifold', 
+        f'Variance Explained Plot ({total_under_thresh} PCs below thresh)'
+    ]
     fig = make_subplots(
         rows=1, cols=2,
         specs=[[{'type': 'scatter3d'}, {'type': 'xy'}]],
         subplot_titles=suplot_names,
     )
 
-    # -- 3D manifold trace
-    fig.add_trace(go.Scatter3d(
-        x=manifold[:, 0],
-        y=manifold[:, 1],
-        z=manifold[:, 2],
-        mode='markers',
-        marker=dict(
-            size=1,
-            color=t,
-            colorscale='Viridis',
-            colorbar=dict(title='Time')
-        ),
-        showlegend=False,
-    ), row=1, col=1)
+    # -- Add trace from each manifold trial
+    for trial_idx in range(n_trials):
+      fig.add_trace(go.Scatter3d(
+          x=proj[trial_idx,:, 0],
+          y=proj[trial_idx,:, 1],
+          z=proj[trial_idx,:, 2],
+          mode='markers',
+          marker=dict(
+              size=1,
+              color=t,
+              colorscale='Viridis',
+              colorbar=dict(title='Time')
+          ),
+          showlegend=False,
+      ), row=1, col=1)
 
     # -- Cumulative variance line trace
     fig.add_trace(go.Scatter(
