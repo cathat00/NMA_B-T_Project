@@ -5,8 +5,6 @@ Collaborative project for Neuromatch Academy.\
 ## 🧪 Notebooks
 - [Baseline](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/main/notebooks/main_notebook.ipynb)
 - [Adding More Targets](https://colab.research.google.com/github/cathat00/NMA_B-T_Project/blob/calebs_branch/notebooks/more_targets.ipynb)
-=======
-Collaborative project for Neuromatch Academy.
 
 ## 🚀 How to Run
 
