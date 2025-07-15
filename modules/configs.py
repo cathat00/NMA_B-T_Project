@@ -61,15 +61,20 @@ class BasicExperimentConfig(ExperimentConfig):
     
   def save(self, filepath, manifold_data=None, overwrite=False):
 
-    if not os.path.exists(filepath):
-      # Create directory path if it doesn't exist
-      os.makedirs(dir_path, exist_ok=True)
-    else:
+    # Create directory path if it doesn't already exist.
+    dir_path = os.path.dirname(filepath)
+    os.makedirs(dir_path, exist_ok=True)
+
+    # If file already exists...
+    if os.path.exists(filepath):
       if overwrite:
+        # Overwrite it
         os.remove(filepath)
       else:
+        # Don't overwrite it! Throw an exception.
         raise Exception(f"File {filepath} already exists! Overwrite set to false in call to 'save'")
-    
+
+    # Save data to .pkl
     data = {
       'params': {
           'random_seed':self.random_seed,
