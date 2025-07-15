@@ -28,6 +28,9 @@ class RNN(object):
         self.tau = tau
         self.dt = dt
 
+        # Initialize list of loss values per trial
+        self.loss_per_trial = None
+
         # Set verbosity level
         # 0: Generate no logs
         # 1: Loading bar for training / manifold calc
@@ -148,7 +151,7 @@ class RNN(object):
         order = np.random.choice(range(ext.shape[0]), ntrials, replace=True)
 
         # initialize calculated loss per trial
-        record_loss = np.zeros(ntrials)
+        self.loss_per_trial = np.zeros(ntrials)
 
         # loop over trials
         for t in tqdm(range(ntrials), disable=(not self.verbosity==1)):
@@ -193,9 +196,9 @@ class RNN(object):
                         self.W[j, self.W_plastic[j]] -= err1[j] * pz / norm
 
             # tape loss
-            record_loss[t] = loss
+            self.loss_per_trial[t] = loss
             if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
-        return record_loss
+        return self.loss_per_trial
 
     def get_manifold(self, ext, ntstart, ntrials=50):
         # Compute the manifold
