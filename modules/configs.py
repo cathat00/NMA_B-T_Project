@@ -2,6 +2,9 @@ import pickle
 import numpy as np
 from os.path import join
 from abc import ABC, abstractmethod
+import tasks as tasks
+from network import RNN
+from bci import BCI
 
 # ===============================================
 # == UTILITY FUNCS FOR READING / WRITING .PKLs ==
