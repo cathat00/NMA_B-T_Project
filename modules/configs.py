@@ -58,7 +58,17 @@ class BasicExperimentConfig(ExperimentConfig):
     # -- The feedback matrix
     self.feedback = np.linalg.pinv(self.bci.decoder)
     
-  def save(self, filepath, manifold_data=None):
+  def save(self, filepath, manifold_data=None, overwrite=False):
+
+    if not os.path.exists(filepath):
+      # Create directory path if it doesn't exist
+      os.makedirs(dir_path, exist_ok=True)
+    else:
+      if overwrite:
+        os.remove(filepath)
+      else:
+        raise Exception(f"File {filepath} already exists! Overwrite set to false in call to 'save'")
+    
     data = {
       'params': {
           'random_seed':self.random_seed,
