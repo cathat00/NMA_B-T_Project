@@ -45,12 +45,12 @@ class ExperimentConfig(ABC):
 
 class BasicExperimentConfig(ExperimentConfig):
   
-  def __init__(self, ntrials=80, ntrials_manifold=50, seed=2):
+  def __init__(self, ntargets=6, ntrials=80, ntrials_manifold=50, seed=2):
 
     super().__init__(ntrials, ntrials_manifold, seed)
 
     # -- The motor reaching task
-    self.task = tasks.BasicReachingTask()
+    self.task = tasks.BasicReachingTask(ntargets=ntargets)
     # -- The recurrent neural network
     self.rnn = RNN(N_in=self.task.ntargets, verbosity=1)
     # -- The brain computer interface
