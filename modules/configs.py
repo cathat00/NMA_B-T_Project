@@ -2,7 +2,7 @@ import pickle
 import numpy as np
 from os.path import join
 from abc import ABC, abstractmethod
-import .tasks
+from . import tasks
 from .network import RNN
 from .bci import BCI
 
