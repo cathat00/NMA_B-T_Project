@@ -28,9 +28,58 @@ def save_figs(figs, filepath, overwrite=False):
       f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
 
-# =================================
-# == MANIFOLD / PCA SUMMARY PLOT ==
-# =================================
+# ================
+# == TASK PLOTS ==
+# ================
+
+def plot_reaching_targets(all_targets, dt=0.01):
+    """
+    Parameters:
+    - target: np.array of shape (n_targets, tsteps, 2)
+    - dt: time per timestep (e.g., 0.01s for 10ms)
+    """
+    n_targets, tsteps, _ = all_targets.shape
+    time = np.arange(tsteps) * dt
+
+    # Build long-form dataframe for Plotly
+    data = {
+        "time": [],
+        "coord": [],
+        "axis": [],
+        "target": []
+    }
+
+    for target_idx in range(n_targets):
+        for axis, name in enumerate(["x", "y"]):
+            data["time"].extend(time)
+            data["coord"].extend(all_targets[target_idx, :, axis])
+            data["axis"].extend([name] * tsteps)
+            data["target"].extend([target_idx] * tsteps)
+
+    df = pd.DataFrame(data)
+
+    fig = px.line(
+        df,
+        x="time",
+        y="coord",
+        color="axis",
+        animation_frame="target",
+        labels={"coord": "Target Coordinate (a.u.)", "time": "Time (s)"},
+        title="Target X/Y Coordinates Over Time"
+    )
+
+    fig.update_layout(
+        legend_title_text="Axis",
+        yaxis_range=[all_targets.min() - 0.01, all_targets.max() + 0.01],
+        transition={"duration": 0},
+    )
+
+    fig.show()
+
+
+# ==================================
+# == MANIFOLD / PCA SUMMARY PLOTS ==
+# ==================================
 
 def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
 
