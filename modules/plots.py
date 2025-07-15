@@ -1,72 +1,155 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.express as px # For advanced plotting
 from plotly.subplots import make_subplots
+import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
+import os
+
 
 # ====================
-# == MANIFOLD PLOTS ==
+# == SAVE FIGS UTIL ==
 # ====================
-def create_manifold_plot(manifold):
 
-  # Manifold is of shape (time, components)
-  t = np.arange(manifold.shape[0])  # time or index
+def save_figs(figs, filepath, overwrite=False):
 
-  # Create a DataFrame for plotting
-  df = pd.DataFrame({
-      "PC1": manifold[:, 0],
-      "PC2": manifold[:, 1],
-      "PC3": manifold[:, 2],
-      "time": t
-  })
+  # -- Check if file already exists
+  if os.path.exists(filepath):
+    if overwrite:
+      # File exists, overwrite it
+      os.remove(filepath)
+    else:
+      # File exists, don't overwrite
+      msg = f"{filepath} already exists. Overwrite set to False in call to save_figs."
+      raise Exception(msg)
 
-  # Plot with Plotly
-  fig = px.scatter_3d(
-      df,
-      x="PC1", y="PC2", z="PC3",
-      color="time",
-      color_continuous_scale="Viridis",
-      title="Activity Projected Onto Manifold (3D PCA)"
-  )
-  fig.update_traces(marker=dict(size=1))
-  return fig
+  # -- Write to HTML file
+  with open(filepath, 'a') as f:
+    for fig in figs:
+      f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
 
-def create_scree_plot(eigenvalues):
-  df_eigenvals = pd.DataFrame({
-      'Principal Component Number': np.arange(1, len(eigenvalues) + 1),
-      'Eigenvalue': eigenvalues
-  })
+# ================
+# == TASK PLOTS ==
+# ================
 
-  fig = px.line(
-      df_eigenvals,
-      x='Principal Component Number',
-      y='Eigenvalue',
-      markers=True,
-      title='Scree Plot'
-  )
+def plot_reaching_targets(all_targets, dt=0.01):
+    """
+    Parameters:
+    - target: np.array of shape (n_targets, tsteps, 2)
+    - dt: time per timestep (e.g., 0.01s for 10ms)
+    """
+    n_targets, tsteps, _ = all_targets.shape
+    time = np.arange(tsteps) * dt
 
-  fig.update_layout(xaxis_title='Principal Component Number', yaxis_title='Eigenvalue')
-  return fig
+    # Build long-form dataframe for Plotly
+    data = {
+        "time": [],
+        "coord": [],
+        "axis": [],
+        "target": []
+    }
+
+    for target_idx in range(n_targets):
+        for axis, name in enumerate(["x", "y"]):
+            data["time"].extend(time)
+            data["coord"].extend(all_targets[target_idx, :, axis])
+            data["axis"].extend([name] * tsteps)
+            data["target"].extend([target_idx] * tsteps)
+
+    df = pd.DataFrame(data)
+
+    fig = px.line(
+        df,
+        x="time",
+        y="coord",
+        color="axis",
+        animation_frame="target",
+        labels={"coord": "Target Coordinate (a.u.)", "time": "Time (s)"},
+        title="Target X/Y Coordinates Over Time"
+    )
+
+    fig.update_layout(
+        legend_title_text="Axis",
+        yaxis_range=[all_targets.min() - 0.01, all_targets.max() + 0.01],
+        transition={"duration": 0},
+    )
+
+    fig.show()
 
 
-def plot_manifold_and_scree(manifold_activity, eigenvalues):
-  # Get the individual figures
-  manifold_fig = create_manifold_plot(manifold_activity)
-  scree_fig = create_scree_plot(eigenvalues)
+# ==================================
+# == MANIFOLD / PCA SUMMARY PLOTS ==
+# ==================================
 
-  # Create subplots
-  fig = make_subplots(
-      rows=1, cols=2, 
-      specs=[[{'type': 'scatter3d'}, {'type': 'scatter'}]],
-      subplot_titles=['Activity Projected Onto Manifold', 'Scree Plot'])
+def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
 
-  # Add traces from the manifold plot
-  for trace in manifold_fig.data:
-      fig.add_trace(trace, row=1, col=1)
+    # -- Projected data shape should be (trials, time, n_pcs)
+    n_trials, n_tsteps, n_pcs = proj.shape
+    t = np.arange(n_tsteps)
 
-  # Add traces from the scree plot
-  for trace in scree_fig.data:
-      fig.add_trace(trace, row=1, col=2)
+    # -- Calculate variance explained
+    explained_variance = eigenvalues / np.sum(eigenvalues)
+    cumulative_variance = np.cumsum(explained_variance)
+    total_under_thresh = np.count_nonzero(cumulative_variance < eigenval_thresh)
+    
+    # -- Initialize subplots
+    suplot_names = [
+        f'Activity Projected Onto Manifold', 
+        f'Variance Explained Plot ({total_under_thresh} PCs below thresh)'
+    ]
+    fig = make_subplots(
+        rows=1, cols=2,
+        specs=[[{'type': 'scatter3d'}, {'type': 'xy'}]],
+        subplot_titles=suplot_names,
+    )
 
-  return fig
+    # -- Add trace from each manifold trial
+    for trial_idx in range(n_trials):
+      fig.add_trace(go.Scatter3d(
+          x=proj[trial_idx,:, 0],
+          y=proj[trial_idx,:, 1],
+          z=proj[trial_idx,:, 2],
+          mode='markers',
+          marker=dict(
+              size=1,
+              color=t,
+              colorscale='Viridis',
+              colorbar=dict(title='Time')
+          ),
+          showlegend=False,
+      ), row=1, col=1)
+
+    # -- Cumulative variance line trace
+    fig.add_trace(go.Scatter(
+        x=np.arange(1, len(eigenvalues) + 1),
+        y=cumulative_variance,
+        mode='lines+markers',
+        name='Cumulative Variance',
+        line=dict(color='blue'),
+        showlegend=False,
+    ), row=1, col=2)
+
+    # -- Eigenvaue threshold line
+    fig.add_trace(go.Scatter(
+        x=[1, len(eigenvalues)],
+        y=[eigenval_thresh, eigenval_thresh],
+        mode='lines',
+        name=f'{int(eigenval_thresh * 100)}% Threshold',
+        line=dict(dash='dash', color='gray'),
+        showlegend=False,
+    ), row=1, col=2)
+
+    # -- Update master plot layout with proper axis titles
+    fig.update_layout(
+        height=500,
+        title_text="Intrinsic Dimensionality Analysis",
+        scene=dict(
+            xaxis_title='PC1',
+            yaxis_title='PC2',
+            zaxis_title='PC3'
+        ),
+        xaxis=dict(title='Principal Component Number'),
+        yaxis=dict(title='Cumulative Variance Explained', range=[0, 1.05]) 
+    )
+
+    return fig

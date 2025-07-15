@@ -18,6 +18,11 @@ class BCI():
     self.n_output_units = n_output_units
 
   def train(self, inputP, target, order):
+    """
+    Train the decoder to perform the six-cue
+    motor reaching task
+    
+    """
     # initialize predictor neural activity
     X = np.zeros((inputP.shape[0]*inputP.shape[1], inputP.shape[-1]))
 
@@ -32,6 +37,11 @@ class BCI():
     # regress target against neural activity
     reg = lm.LinearRegression()
     reg.fit(X,Y)
+    self.decoder = reg.coef_
+
+    # make predictions
+    y = reg.predict(X)
+    self.mse = np.mean((y-Y)**2)
 
     # make predictions
     self.decoder = reg.predict(X)
