@@ -37,8 +37,8 @@ class BCI():
     # regress target against neural activity
     reg = lm.LinearRegression()
     reg.fit(X,Y)
+    self.decoder = reg.coef_
 
     # make predictions
     y = reg.predict(X)
-    mse = np.mean((y-Y)**2)
-    return reg.coef_, mse
+    self.mse = np.mean((y-Y)**2)
