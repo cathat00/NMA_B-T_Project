@@ -141,7 +141,6 @@ def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
 
     # -- Update master plot layout with proper axis titles
     fig.update_layout(
-        height=500,
         title_text="Intrinsic Dimensionality Analysis",
         scene=dict(
             xaxis_title='PC1',
