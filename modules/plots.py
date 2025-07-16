@@ -12,6 +12,10 @@ import os
 
 def save_figs(figs, filepath, overwrite=False):
 
+  # -- Create directory path if it doesn't already exist.
+  dir_path = os.path.dirname(filepath)
+  os.makedirs(dir_path, exist_ok=True)
+
   # -- Check if file already exists
   if os.path.exists(filepath):
     if overwrite:
