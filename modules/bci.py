@@ -45,7 +45,3 @@ class BCI():
     # make predictions
     y = reg.predict(X)
     self.mse = np.mean((y-Y)**2)
-
-    # make predictions
-    self.decoder = reg.predict(X)
-    mse = np.mean((y-Y)**2)
