@@ -1,6 +1,7 @@
 # @title My RNN
 import numpy as np
 from tqdm import tqdm
+from sklearn.preprocessing import StandardScaler
 
 class RNN(object):
     """
@@ -197,39 +198,42 @@ class RNN(object):
             if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
         return record_loss
 
-    def get_manifold(self, ext, ntstart, ntrials=50):
-        # Compute the manifold
-        tsteps = ext.shape[1]
-        T = self.dt*tsteps
-        points = (tsteps-ntstart)
-        activity = np.zeros((points*ntrials,self.N))
-        order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
+    def get_manifold_zscore(network, ext, ntstart, ntrials=50):
 
-        # Run a bunch of simulations
-        for t in tqdm(range(ntrials), disable=self.verbosity<1):
-            time, r, z = self.simulate(T,ext[order[t]])
-            activity[t*points:(t+1)*points,:] = z[ntstart:,:]
-            
-        cov = np.cov(activity.T) # Compute covariance matrix of activity
-        evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
-        proj = activity @ evecs.real # Project activity into principal component space
+    #Extract the RNN manifold using z-score normalization
+      tsteps = ext.shape[1]
+      T = network.dt * tsteps
+      points = tsteps - ntstart
+      activity = np.zeros((points * ntrials, network.N))
+      order = np.random.choice(range(ext.shape[0]), ntrials, replace=True)
 
-        # Calculate participation ratio: a quantitative measure of how many principal
-        # components are necessary to describe most of the variance in the data.
-        pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
+      #Simulate trials and collect activity
+      for t in tqdm(range(ntrials), disable=network.verbosity < 1):
+          time, r, z = network.simulate(T, ext[order[t]])
+          activity[t * points:(t + 1) * points, :] = z[ntstart:, :]
 
-        # Reshape the activity (used in BCI tuning?)
-        activity_reshaped = activity.reshape(ntrials, -1, self.N)
-        proj_reshaped = proj.reshape(ntrials, -1, self.N)
+      #Z-score normalization
+      scaler = StandardScaler()
+      activity_z = scaler.fit_transform(activity)
 
-        results = {
-            "activity":activity, 
-            "activity_reshaped":activity_reshaped,
-            "proj":proj, 
-            "proj_reshaped":proj_reshaped, 
-            "eigenvals":evals, "eigenvecs":evecs,
-            "particip_ratio":pr,
-            "order":order,
-        }
-        
-        return results
+      #PCA
+      cov = np.cov(activity_z.T) #Compute covariance matrix of activity
+      evals, evecs = np.linalg.eig(cov) #Get eigenvalues and eigenvectors of covariance
+      proj = activity_z @ evecs.real #Project activity into principal component space
+      pr = np.round(np.sum(evals.real) ** 2 / np.sum(evals.real ** 2)).astype(int)
+
+      #Reshape the avitivity (used in BCI tuning?)
+      activity_reshaped = activity_z.reshape(ntrials, -1, network.N)
+      proj_reshaped = proj.reshape(ntrials, -1, network.N)
+
+      results = {
+              "activity":activity,
+              "activity_reshaped":activity_reshaped,
+              "proj":proj,
+              "proj_reshaped":proj_reshaped,
+              "eigenvals":evals, "eigenvecs":evecs,
+              "particip_ratio":pr,
+              "order":order,
+          }
+
+      return results
