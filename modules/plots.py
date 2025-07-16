@@ -90,12 +90,12 @@ def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
     # -- Calculate variance explained
     explained_variance = eigenvalues / np.sum(eigenvalues)
     cumulative_variance = np.cumsum(explained_variance)
-    total_under_thresh = np.count_nonzero(cumulative_variance < eigenval_thresh)
+    n_pcs = np.count_nonzero(cumulative_variance < eigenval_thresh) + 1
     
     # -- Initialize subplots
     suplot_names = [
         f'Activity Projected Onto Manifold', 
-        f'Variance Explained Plot ({total_under_thresh} PCs below thresh)'
+        f'{n_pcs} PCs to Reach {int(eigenval_thresh * 100)}% Variance'
     ]
     fig = make_subplots(
         rows=1, cols=2,
@@ -160,13 +160,11 @@ def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9
 
     Parameters:
     - num_targets_list: list of int
-        A list containing the number of targets used in each task (e.g., [2, 3, 4, ...]).
+        A list containing the number of targets used in each task.
     - eigenval_list: list of np.ndarray
-        A list of 1D numpy arrays, where each array contains the PCA eigenvalues 
-        (variance explained) for one task condition.
+        A list of 1D numpy arrays, where each array contains the PCA eigenvalues.
     - eigenval_thresh: float, optional (default=0.9)
-        The cumulative variance threshold used to determine how many PCs are required 
-        (e.g., 0.9 for 90% variance explained).
+        The cumulative variance threshold used to determine how many PCs are required.
     """
 
     num_pcs_list = []
