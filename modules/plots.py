@@ -153,3 +153,49 @@ def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
     )
 
     return fig
+
+def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9):
+    """
+    Plot the number of principal components (PCs) needed 
+    to reach a cumulative variance threshold as a function of the number of targets.
+
+    Parameters:
+    - num_targets_list: list of int
+        A list containing the number of targets used in each task (e.g., [2, 3, 4, ...]).
+    - eigenval_list: list of np.ndarray
+        A list of 1D numpy arrays, where each array contains the PCA eigenvalues 
+        (variance explained) for one task condition.
+    - eigenval_thresh: float, optional (default=0.9)
+        The cumulative variance threshold used to determine how many PCs are required 
+        (e.g., 0.9 for 90% variance explained).
+    """
+
+    num_pcs_list = []
+
+    for eigenvalues in eigenval_list:
+        explained_variance = eigenvalues / np.sum(eigenvalues)
+        cumulative_variance = np.cumsum(explained_variance)
+        n_pcs = np.count_nonzero(cumulative_variance < eigenval_thresh) + 1
+        num_pcs_list.append(n_pcs)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=num_targets_list,
+        y=num_pcs_list,
+        mode='lines+markers',
+        line=dict(color='royalblue'),
+        marker=dict(size=8),
+        name=f"PCs ≥ {int(eigenval_thresh * 100)}% variance"
+    ))
+
+    fig.update_layout(
+        title="Intrinsic Dimensionality vs. Number of Targets",
+        xaxis_title="Number of Targets",
+        yaxis_title=f"Number of PCs ≥ {int(eigenval_thresh*100)}% Variance",
+        xaxis=dict(tickmode='linear'),
+        template="plotly_white",
+        height=500,
+        width=600
+    )
+
+    return fig
