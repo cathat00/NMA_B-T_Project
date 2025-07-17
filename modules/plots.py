@@ -2,6 +2,7 @@ from plotly.subplots import make_subplots
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.colors as pc
 import pandas as pd
 import os
 
@@ -32,130 +33,137 @@ def save_figs(figs, filepath, overwrite=False):
       f.write(fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
 
-# ================
-# == TASK PLOTS ==
-# ================
+# ======================
+# == EXPERIMENT PLOTS ==
+# ======================
 
-def plot_reaching_targets(all_targets, dt=0.01):
-    """
-    Parameters:
-    - target: np.array of shape (n_targets, tsteps, 2)
-    - dt: time per timestep (e.g., 0.01s for 10ms)
-    """
-    n_targets, tsteps, _ = all_targets.shape
-    time = np.arange(tsteps) * dt
+def plot_cumulative_variance(eigenvalues, eigenval_thresh=0.9):
+    explained_variance = eigenvalues / np.sum(eigenvalues)
+    cumulative_variance = np.cumsum(explained_variance)
 
-    # Build long-form dataframe for Plotly
-    data = {
-        "time": [],
-        "coord": [],
-        "axis": [],
-        "target": []
-    }
-
-    for target_idx in range(n_targets):
-        for axis, name in enumerate(["x", "y"]):
-            data["time"].extend(time)
-            data["coord"].extend(all_targets[target_idx, :, axis])
-            data["axis"].extend([name] * tsteps)
-            data["target"].extend([target_idx] * tsteps)
-
-    df = pd.DataFrame(data)
+    df = pd.DataFrame({
+        'Principal Component': np.arange(1, len(eigenvalues)+1),
+        'Cumulative Variance Explained': cumulative_variance
+    })
 
     fig = px.line(
         df,
-        x="time",
-        y="coord",
-        color="axis",
-        animation_frame="target",
-        labels={"coord": "Target Coordinate (a.u.)", "time": "Time (s)"},
-        title="Target X/Y Coordinates Over Time"
+        x='Principal Component',
+        y='Cumulative Variance Explained',
+        markers=True
+    )
+
+    fig.add_hline(
+        y=eigenval_thresh,
+        line_dash="dash",
+        line_color="gray",
+        annotation_text=f"{int(eigenval_thresh*100)}% Threshold",
+        annotation_position="top left"
     )
 
     fig.update_layout(
-        legend_title_text="Axis",
-        yaxis_range=[all_targets.min() - 0.01, all_targets.max() + 0.01],
-        transition={"duration": 0},
-    )
-
-    fig.show()
-
-
-# ==================================
-# == MANIFOLD / PCA SUMMARY PLOTS ==
-# ==================================
-
-def plot_pca_summary(proj, eigenvalues, eigenval_thresh=0.9):
-
-    # -- Projected data shape should be (trials, time, n_pcs)
-    n_trials, n_tsteps, n_pcs = proj.shape
-    t = np.arange(n_tsteps)
-
-    # -- Calculate variance explained
-    explained_variance = eigenvalues / np.sum(eigenvalues)
-    cumulative_variance = np.cumsum(explained_variance)
-    total_under_thresh = np.count_nonzero(cumulative_variance < eigenval_thresh)
-    
-    # -- Initialize subplots
-    suplot_names = [
-        f'Activity Projected Onto Manifold', 
-        f'Variance Explained Plot ({total_under_thresh} PCs below thresh)'
-    ]
-    fig = make_subplots(
-        rows=1, cols=2,
-        specs=[[{'type': 'scatter3d'}, {'type': 'xy'}]],
-        subplot_titles=suplot_names,
-    )
-
-    # -- Add trace from each manifold trial
-    for trial_idx in range(n_trials):
-      fig.add_trace(go.Scatter3d(
-          x=proj[trial_idx,:, 0],
-          y=proj[trial_idx,:, 1],
-          z=proj[trial_idx,:, 2],
-          mode='markers',
-          marker=dict(
-              size=1,
-              color=t,
-              colorscale='Viridis',
-              colorbar=dict(title='Time')
-          ),
-          showlegend=False,
-      ), row=1, col=1)
-
-    # -- Cumulative variance line trace
-    fig.add_trace(go.Scatter(
-        x=np.arange(1, len(eigenvalues) + 1),
-        y=cumulative_variance,
-        mode='lines+markers',
-        name='Cumulative Variance',
-        line=dict(color='blue'),
-        showlegend=False,
-    ), row=1, col=2)
-
-    # -- Eigenvaue threshold line
-    fig.add_trace(go.Scatter(
-        x=[1, len(eigenvalues)],
-        y=[eigenval_thresh, eigenval_thresh],
-        mode='lines',
-        name=f'{int(eigenval_thresh * 100)}% Threshold',
-        line=dict(dash='dash', color='gray'),
-        showlegend=False,
-    ), row=1, col=2)
-
-    # -- Update master plot layout with proper axis titles
-    fig.update_layout(
-        title_text="Intrinsic Dimensionality Analysis",
-        scene=dict(
-            xaxis_title='PC1',
-            yaxis_title='PC2',
-            zaxis_title='PC3'
-        ),
-        xaxis=dict(title='Principal Component Number'),
-        yaxis=dict(title='Cumulative Variance Explained', range=[0, 1.05]) 
+        yaxis_range=[0, 1.05],
+        xaxis_title='Principal Component Number',
+        yaxis_title='Cumulative Variance Explained'
     )
 
     return fig
+
+
+def plot_traj(proj, targets_per_trial):
+  """
+  Plot the trajectories of the RNN's activity in each trial onto the neural manifold. 
+  Two different views of the trajectories are plotted  together in a subplot: 
+  1) Trajectories, colored by time
+  2) Trajectories, colored by target
+
+  Parameters:
+  - proj: ndarray of shape (n_trials, n_tsteps, n_pcs)
+      A list containing the projected activity for each trial across all timesteps.
+  - targets_per_trial: list
+      List of the target index for each trial. E.g., for 3 trials [0,1,5] would mean
+      that the target index of trial 1 was 0, for trial 2 was 1, etc.
+      
+  """
+  # -- Projected data shape should be (trials, time, n_pcs)
+  n_trials, n_tsteps, n_pcs = proj.shape
+  t = np.arange(n_tsteps)
+
+  # -- Initialize colors corresponding to each target
+  color_list = pc.qualitative.Plotly
+    
+  # -- Keep track of which targets we've already added to the legend
+  targets_in_legend = set()
+
+  # -- Initialize subplots
+  fig = make_subplots(
+      rows=1, cols=2,
+      specs=[[{'type': 'scatter3d'}, {'type': 'scatter3d'}]],
+      subplot_titles=[
+          f'Manifold Trajectories (Colored by Time)', 
+          f'Manifold Trajectories (Colored by Target)',
+      ],
+  )
+
+  for trial_idx, target_idx in enumerate(targets_per_trial):
+
+    color = color_list[target_idx % len(color_list)]
+    label = f'Target {target_idx}'
+
+    show_legend = target_idx not in targets_in_legend
+    if show_legend:
+        targets_in_legend.add(target_idx)
+
+    # -- Add trace from each manifold trial, colored by time
+    fig.add_trace(go.Scatter3d(
+        x=proj[trial_idx,:, 0],
+        y=proj[trial_idx,:, 1],
+        z=proj[trial_idx,:, 2],
+        mode='markers',
+        marker=dict(
+            size=2,
+            color=t,
+            colorscale='Viridis',
+            #colorbar=dict(title='Time'),
+            colorbar=dict(
+                x=0.5,
+                thickness=15,
+                title='Time'
+            )        
+        ),
+        legendgroup=label,
+        name=label,
+        showlegend=False,
+    ), row=1, col=1)
+
+    # -- Add trace from each manifold trial, colored by target
+    fig.add_trace(go.Scatter3d(
+        x=proj[trial_idx,:,0],
+        y=proj[trial_idx,:,1],
+        z=proj[trial_idx,:,2],
+        mode='markers',
+        marker=dict(size=2, color=color),
+        legendgroup=label,
+        name=label,
+        showlegend=show_legend
+    ), row=1, col=2)
+
+  # -- Update master plot layout with proper axis titles
+  fig.update_layout(
+      scene=dict(
+          xaxis_title='PC1',
+          yaxis_title='PC2',
+          zaxis_title='PC3'
+      ),
+      height=500 
+  )
+
+  return fig
+
+
+# ==============================
+# == EXPERIMENT SUMMARY PLOTS ==
+# ==============================
 
 def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9):
     """
@@ -202,4 +210,3 @@ def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9
     )
 
     return fig
-
