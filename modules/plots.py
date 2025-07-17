@@ -165,7 +165,7 @@ def plot_traj(proj, targets_per_trial):
 # == EXPERIMENT SUMMARY PLOTS ==
 # ==============================
 
-def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9):
+def plot_dim_vs_targs(num_targets_list, eigenval_list, eigenval_thresh=0.9):
     """
     Plot the number of principal components (PCs) needed 
     to reach a cumulative variance threshold as a function of the number of targets.
@@ -206,7 +206,79 @@ def plot_num_pcs_vs_targets(num_targets_list, eigenval_list, eigenval_thresh=0.9
         xaxis=dict(tickmode='linear'),
         template="plotly_white",
         height=500,
-        width=600
     )
 
     return fig
+
+def plot_dim_vs_targs_bar(ntargets_list, eigenval_list, max_k=10, default_k=2):
+    """
+    Plot the amount of variance explained by the top-k principal components 
+    as a function of the number of targets.
+
+    Parameters:
+    - num_targets_list: list of int  
+        A list containing the number of targets used in each task.
+    - eigenval_list: list of np.ndarray  
+        A list of 1D numpy arrays, where each array contains the PCA eigenvalues
+        corresponding to a given task.
+    - max_k: int, optional (default=5)  
+        The maximum number of top PCs to consider in the slider.
+    - default_k: int, optional (default=2)  
+        The default number of PCs displayed when the plot is first rendered.
+
+    """
+    x_labels = [str(n) for n in ntargets_list]
+    traces = []
+    steps = []
+
+    for k in range(1, max_k + 1):
+        y_vals = []
+        for eigenvalues in eigenval_list:
+            explained_variance = eigenvalues / np.sum(eigenvalues)
+            var_k = np.sum(explained_variance[:k])
+            y_vals.append(var_k)
+
+        visible = (k == default_k)
+
+        trace = go.Bar(
+            x=x_labels,
+            y=y_vals,
+            name=f"Top {k} PCs",
+            visible=visible,
+            marker_color='royalblue',
+            width=0.6,
+        )
+        traces.append(trace)
+
+        step = dict(
+            method="update",
+            args=[
+                {"visible": [i == (k - 1) for i in range(max_k)]},
+                {"title": f"Variance Explained by Top {k} PCs vs. Number of Targets",
+                 "yaxis": {"title": f"Variance Explained (Top {k} PCs)"}}
+            ],
+            label=str(k)
+        )
+        steps.append(step)
+
+    sliders = [dict(
+        active=default_k - 1,
+        currentvalue={"prefix": "Top-k PCs: "},
+        pad={"t": 50},
+        steps=steps
+    )]
+
+    fig = go.Figure(data=traces)
+
+    fig.update_layout(
+        sliders=sliders,
+        title=f"Variance Explained by Top {default_k} PCs vs. Number of Targets",
+        xaxis_title="Number of Targets",
+        yaxis_title=f"Variance Explained (Top {default_k} PCs)",
+        yaxis=dict(range=[0, 1]),
+        template='plotly_white',
+        height=500,
+    )
+
+    return fig
+
