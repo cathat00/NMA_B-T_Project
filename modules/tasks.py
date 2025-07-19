@@ -42,6 +42,10 @@ class MotorReachingTask(ABC):
   def _create_targets(self):
     pass
 
+  @abstractmethod
+  def get_loss(self, prediction, targets_by_trial):
+    pass
+
 
 # =========================
 # == BASIC REACHING TASK ==
@@ -74,6 +78,15 @@ class BasicReachingTask(MotorReachingTask):
           self.targets[j,:,0] = rs*np.cos(phis[j])
           # create y-coordinate on screen
           self.targets[j,:,1] = rs*np.sin(phis[j])
+
+  def get_loss(self, pred, targets_by_trial):
+    cost = 0
+    ntrials = pred.shape[0]
+    for trial_idx in range(ntrials):
+        error = pred[trial_idx,...]-self.targets[targets_by_trial[trial_idx],...]
+        cost += np.mean(error**2)
+    return cost
+
 
 # ================
 # == FORCE TASK ==
