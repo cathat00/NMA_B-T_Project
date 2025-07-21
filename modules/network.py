@@ -19,7 +19,7 @@ class RNN(object):
     * P_plastic: how many neurons are plastic in the recurrent network
     """
     def __init__(self, N=800, g=1.5, p=0.1, tau=0.1, dt=0.01,
-                 N_in=6, verbosity=1):
+                 N_in=6, delta=20., verbosity=1):
         # set parameters
         self.N = N
         self.g = g
@@ -27,6 +27,7 @@ class RNN(object):
         self.K = int(p*N)
         self.tau = tau
         self.dt = dt
+        self.delta = delta
 
         # Initialize list of loss values per trial
         self.loss_per_trial = None
@@ -35,7 +36,7 @@ class RNN(object):
         # 0: Generate no logs
         # 1: Loading bar for training / manifold calc
         # 2: Loss per iteration of training
-        self.verbosity = verbosity 
+        self.verbosity = verbosity
 
         # create recurrent W
         mask = np.random.rand(self.N,self.N)<self.p
@@ -121,9 +122,8 @@ class RNN(object):
             # store activity
             record_r[i,:] = self.r
         return time, record_r, np.tanh(record_r)
-
-    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, 
-                delta=20., wplastic=None):
+    
+    def relearn(self, ntrials, ext, ntstart, decoder, feedback, target, wplastic=None):
         """
         Args
           self.z: RNN network's activation
@@ -145,7 +145,7 @@ class RNN(object):
             self.W_plastic = [np.where(self.W[i,:]!=0)[0] for i in range(self.N)]
         else:
             self.W_plastic = wplastic
-        self.P = [1./delta*np.eye(len(self.W_plastic[i])) for i in range(len(self.W_plastic))]
+        self.P = [1./self.delta*np.eye(len(self.W_plastic[i])) for i in range(len(self.W_plastic))]
 
         # create n trials of target indices chosen from 0 to 5
         order = np.random.choice(range(ext.shape[0]), ntrials, replace=True)
@@ -197,29 +197,37 @@ class RNN(object):
 
             # tape loss
             self.loss_per_trial[t] = loss
-            if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))
-        return self.loss_per_trial
+            if self.verbosity==2: print('Loss in Trial %d is %.5f'%(t+1,loss))    
 
-    def get_manifold(self, ext, ntstart, ntrials=50):
+    def calculate_manifold(self, ext, ntstart, ntrials=50):
         # Compute the manifold
         tsteps = ext.shape[1]
         T = self.dt*tsteps
         points = (tsteps-ntstart)
         activity = np.zeros((points*ntrials,self.N))
-        order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
 
         # Run a bunch of simulations
+        order = np.random.choice(range(ext.shape[0]),ntrials,replace=True)
         for t in tqdm(range(ntrials), disable=self.verbosity<1):
             time, r, z = self.simulate(T,ext[order[t]])
             activity[t*points:(t+1)*points,:] = z[ntstart:,:]
             
         cov = np.cov(activity.T) # Compute covariance matrix of activity
         evals,evecs = np.linalg.eig(cov) # Get eigenvalues and eigenvectors of covariance
-        proj = activity @ evecs.real # Project activity into principal component space
+        xi = activity @ evecs.real # Project activity into principal component space
 
         # Calculate participation ratio: a quantitative measure of how many principal
         # components are necessary to describe most of the variance in the data.
         pr = np.round(np.sum(evals.real)**2/np.sum(evals.real**2)).astype(int)
+
+        # reshape the activity
+        activity_reshaped = activity.reshape(ntrials, -1, self.N)
+        xi2 = xi.reshape(ntrials, -1, self.N)
+        return {"xi2":xi2, "order":order, "xi":xi, "cov":cov, "ev":evals, "evec":evecs, "pr":pr,"activity":activity, "activity_reshaped":activity_reshaped}
+
+
+"""
+        return activity, cov, evals, evecs, pr, proj, order
 
         # Reshape the activity (used in BCI tuning?)
         activity_reshaped = activity.reshape(ntrials, -1, self.N)
@@ -230,9 +238,10 @@ class RNN(object):
             "activity_reshaped":activity_reshaped,
             "proj":proj, 
             "proj_reshaped":proj_reshaped, 
-            "eigenvals":evals, "eigenvecs":evecs,
-            "particip_ratio":pr,
+            "evals":evals.real, "evecs":evecs.real,
+            "pr":pr,
             "order":order,
         }
         
         return results
+"""
