@@ -22,37 +22,30 @@ class BCI():
     self.n_output_units = n_output_units
     self.n_pcs_to_select = n_pcs_to_select
 
-  def train(self, proj, eigenvecs, target, order):
-    """
-    Train the decoder to perform the six-cue
-    motor reaching task
+
+  def train(self, proj, target, eigenvectors, targets_by_trial):
+
+    _,_,num_pcs = proj.shape
+    inputP = proj[...,:self.n_pcs_to_select]
     
-    """
-    # Read projected activity shape
-    # (Should be ntrials, tsteps, npcs)
-    ntrials, tsteps, npcs = proj.shape
+    # -- Estimate BCI weights
+    # Regressing target coordinates against neural activity
+    # X = Neural activity
+    # Y = Predicted target coordinates
+    X = np.zeros((inputP.shape[0]*inputP.shape[1], inputP.shape[-1]))
+    Y = np.zeros((inputP.shape[0]*inputP.shape[1], self.n_output_units))
 
-    # Crop projection to n_pcs_to_select eigenvalues
-    P = proj[...,:self.n_pcs_to_select]
-    
-    # Initialize predictor neural activity
-    X = np.zeros((P.shape[0]*P.shape[1], P.shape[-1]))
-    # Initialize predicted target (screen-space)
-    Y = np.zeros((P.shape[0]*P.shape[1], self.n_output_units))
+    for j in range(inputP.shape[0]): # Fill up X and Y matrices
+        X[j*inputP.shape[1]:(j+1)*inputP.shape[1],:] = inputP[j]
+        Y[j*inputP.shape[1]:(j+1)*inputP.shape[1],:] = target[targets_by_trial[j]]
 
-    # Fill up predictor activity and predicted target
-    for j in range(P.shape[0]):
-        X[j*P.shape[1]:(j+1)*P.shape[1],:] = P[j]
-        Y[j*P.shape[1]:(j+1)*P.shape[1],:] = target[order[j]]
-
-    # Fit target to neural activity to estimate decoder
     reg = lm.LinearRegression()
-    reg.fit(X,Y)
-    self.decoder = np.zeros((self.n_output_units, npcs))
-    self.decoder[...,:self.n_pcs_to_select] = reg.coef_
-
-    # Use projection matrix (C) and decoder matrix to compute
-    # transformation matrix (T)...
-    print(f"Decoder Shape: {self.decoder.shape}")
-    print(f"Eigenvecs Shape: {eigenvecs.T.shape}")
-    self.transformer = self.decoder @ eigenvecs.T
+    reg.fit(X,Y) # Solve for BCI weights
+    W_bci = reg.coef_ # BCI weights
+    
+    # -- Get transformer matrix: T = D @ P
+    P = eigenvectors.real.T
+    D = np.zeros((2, num_pcs))
+    D[:,:self.n_pcs_to_select] = W_bci
+    
+    self.transformer = D @ P

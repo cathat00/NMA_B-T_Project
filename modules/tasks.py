@@ -42,10 +42,6 @@ class MotorReachingTask(ABC):
   def _create_targets(self):
     pass
 
-  @abstractmethod
-  def get_loss(self, prediction, targets_by_trial):
-    pass
-
 
 # =========================
 # == BASIC REACHING TASK ==
@@ -67,29 +63,17 @@ class BasicReachingTask(MotorReachingTask):
             self.stimuli[j,:self.stim_length,j] = self.stim_amplitude
 
   def _create_targets(self):
-      phis = np.linspace(0, 2*np.pi, self.ntargets, endpoint=False)
-      rs = np.zeros(self.tsteps)
+    # create target trajectories
+    phis = np.linspace(0, 2*np.pi, self.ntargets, endpoint=False)
+    rs = np.zeros(self.tsteps)
 
-      # define each target's x and y coordinate
-      rs[self.stim_length:] = np.ones(self.tsteps-self.stim_length)*self.target_max
-      self.targets = np.zeros((self.ntargets,self.tsteps,2))
-      for j in range(self.ntargets):
-          # create x-coordinate on screen
-          self.targets[j,:,0] = rs*np.cos(phis[j])
-          # create y-coordinate on screen
-          self.targets[j,:,1] = rs*np.sin(phis[j])
-
-  def get_loss(self, pred, targets_by_trial):
-    cost = 0
-    ntrials = pred.shape[0]
-    for trial_idx in range(ntrials):
-        error = pred[trial_idx,...]-self.targets[targets_by_trial[trial_idx],...]
-        cost += np.mean(error**2)
-    return cost
-
-
-# ================
-# == FORCE TASK ==
-# ================
-# ... TODO
+    # define each target's x and y coordinate
+    rs[self.stim_length:] = np.ones(self.tsteps-self.stim_length)*self.target_max
+    traj = np.zeros((self.ntargets,self.tsteps,2))
+    for j in range(self.ntargets):
+        # create x-coordinate on screen
+        traj[j,:,0] = rs*np.cos(phis[j])
+        # create y-coordinate on screen
+        traj[j,:,1] = rs*np.sin(phis[j])
+    self.targets = traj
 
