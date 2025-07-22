@@ -77,3 +77,32 @@ class BasicReachingTask(MotorReachingTask):
         traj[j,:,1] = rs*np.sin(phis[j])
     self.targets = traj
 
+
+class GeometricReachingTask(MotorReachingTask):
+
+  def _create_stimuli(self):
+    self.stimuli = np.zeros((self.ntargets, self.tsteps, self.ntargets))
+    if self.stim_is_2d:
+        phis = np.linspace(0,2*np.pi,self.targets,endpoint=False)
+        for j in range(self.stimuli.shape[0]):
+            self.stimuli[j,:self.stim_length,0] = self.stim_amplitude*np.cos(phis[j])
+            self.stimuli[j,:self.stim_length,1] = self.stim_amplitude*np.sin(phis[j])
+            self.stimuli[j,:self.stim_length,2:] = 0
+    else:
+        for j in range(self.ntargets):
+            self.stimuli[j,:self.stim_length,j] = self.stim_amplitude
+
+  def _create_targets(self):
+    # create target trajectories
+    phis = np.linspace(0, 2*np.pi, self.ntargets, endpoint=False)
+    rs = np.zeros(self.tsteps)
+
+    # define each target's x and y coordinate
+    rs[self.stim_length:] = np.ones(self.tsteps-self.stim_length)*self.target_max
+    traj = np.zeros((self.ntargets,self.tsteps,2))
+    for j in range(self.ntargets):
+        # create x-coordinate on screen
+        traj[j,:,0] = rs*np.cos(phis[j])
+        # create y-coordinate on screen
+        traj[j,:,1] = rs*np.sin(phis[j])
+    self.targets = traj
