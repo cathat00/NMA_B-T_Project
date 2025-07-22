@@ -559,3 +559,81 @@ class ExperimentSummaryViz(Visualization):
         )
 
         return fig
+
+
+# ======================================
+# == MULTI-SEED SUMMARY VISUALIZATION ==
+# ======================================
+
+class MultiSeedSummaryViz(Visualization):
+
+    def __init__(self, experiments, pr_list, all_n_over_thresh, eigenval_thresh=0.9):
+        
+        super().__init__()
+
+        # Set member variables
+        self.eigenval_thresh = eigenval_thresh
+
+        # Create plots
+        dim_fig = self._plot_dim(experiments, pr_list, all_n_over_thresh)
+
+        # Store plots in self.figures
+        self.figures = [dim_fig]
+
+    
+    def _plot_dim(self, experiments, pr_list, all_n_over_thresh):
+
+        # Create the figure
+        fig = make_subplots(
+            rows=1, cols=2, 
+            subplot_titles=[
+                f'# of PCs required to explain {self.eigenval_thresh} of variance',
+                'Participation Ratio'
+            ]
+        )
+
+        # Subplot 1: Number of PCs over threshold
+        fig.add_trace(go.Scatter(
+            x=experiments,
+            y=np.mean(all_n_over_thresh, axis=0),
+            mode='lines+markers',
+            name='# of PCs over threshold',
+            error_y=dict(
+                type='data',
+                array=np.std(all_n_over_thresh, axis=0),
+                visible=True,
+                thickness=1.5,
+                width=4,
+            ),
+            marker=dict(symbol='circle', size=6),
+            line=dict(width=2)
+        ), row=1, col=1)
+
+        # Subplot 2: Participation Ratio
+        fig.add_trace(go.Scatter(
+            x=experiments,
+            y=np.mean(pr_list, axis=0),
+            name='Participation Ratio',
+            mode='lines+markers',
+            error_y=dict(
+                type='data',
+                array=np.std(pr_list, axis=0),
+                visible=True,
+                thickness=1.5,
+                width=4,
+            ),
+            marker=dict(symbol='circle', color='red', size=6),
+            line=dict(width=2, color='red')
+        ), row=1, col=2)
+
+        # Update layout with correct axis IDs
+        fig.update_layout(
+            xaxis_title='# of Targets',
+            yaxis_title='# of PCs Required to Explain > 90% of Variance',
+            xaxis2_title='# of Targets',
+            yaxis2_title='Participation Ratio',
+            legend=dict(x=0.01, y=0.99),
+            showlegend=False,
+        )
+
+        return fig

@@ -224,24 +224,3 @@ class RNN(object):
         activity_reshaped = activity.reshape(ntrials, -1, self.N)
         xi2 = xi.reshape(ntrials, -1, self.N)
         return {"xi2":xi2, "order":order, "xi":xi, "cov":cov, "ev":evals, "evec":evecs, "pr":pr,"activity":activity, "activity_reshaped":activity_reshaped}
-
-
-"""
-        return activity, cov, evals, evecs, pr, proj, order
-
-        # Reshape the activity (used in BCI tuning?)
-        activity_reshaped = activity.reshape(ntrials, -1, self.N)
-        proj_reshaped = proj.reshape(ntrials, -1, self.N)
-
-        results = {
-            "activity":activity, 
-            "activity_reshaped":activity_reshaped,
-            "proj":proj, 
-            "proj_reshaped":proj_reshaped, 
-            "evals":evals.real, "evecs":evecs.real,
-            "pr":pr,
-            "order":order,
-        }
-        
-        return results
-"""

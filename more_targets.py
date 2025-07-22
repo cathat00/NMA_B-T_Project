@@ -34,7 +34,7 @@ for seed in seeds:
     exp_name = f"{ntargets}Targets" # Name of this experiment
     exp_out_dir = join(root_out_dir, exp_name)
 
-    cfg = configs.BasicExperimentConfig(ntrials=80, ntargets=ntargets, seed=seed)
+    cfg = configs.BasicExperimentConfig(ntrials=5, ntargets=ntargets, seed=seed)
     task = cfg.task # The task the RNN will learn
     rnn = cfg.rnn # Recurrent Neural Network
     bci = cfg.bci # Brain computer interface
@@ -65,10 +65,10 @@ for seed in seeds:
     activity = manifold_out['activity_reshaped']
     order = manifold_out['order'] # Target indices for each trial
     evecs = manifold_out['evec'] # Eigenvectors
+    eigenval_list.append(manifold_out['ev'])
 
     # -- Train BCI
     bci.train(proj,task.targets[:,task.stim_length:,:],evecs,order)
-
 
     # ===========================================
     # == Visualize Results For This Experiment ==
