@@ -64,16 +64,20 @@ class BasicReachingTask(MotorReachingTask):
 
   def _create_targets(self):
     # create target trajectories
-    phis = np.linspace(0, 2*np.pi, self.ntargets, endpoint=False)
-    rs = np.zeros(self.tsteps)
+    phis = np.linspace(0, 2*np.pi, self.ntargets + 1, endpoint=False)
+    rs_base = np.zeros(self.ntargets + 1) * self.target_max
 
-    # define each target's x and y coordinate
-    rs[self.stim_length:] = np.ones(self.tsteps-self.stim_length)*self.target_max
-    traj = np.zeros((self.ntargets,self.tsteps,2))
-    for j in range(self.ntargets):
+    # changing the spatial geometry: alternating target radii
+    for i in range(len(rs_base)):
+      if i % 2 == 1:
+        rs_base[i] *= .6 #pulling away every other target inward
+      
+      rs = np.zeros(self.tsteps)
+      rs[self.stim_length:] = 1.0 #movement begins after stim_length
+    traj = np.zeros((self.ntargets + 1, self.tsteps, 2))
+    for j in range(self.ntargets + 1):
         # create x-coordinate on screen
-        traj[j,:,0] = rs*np.cos(phis[j])
+        traj[j,:,0] = rs*rs_base[j]*np.cos(phis[j])
         # create y-coordinate on screen
-        traj[j,:,1] = rs*np.sin(phis[j])
+        traj[j,:,1] = rs*rs_base[j]*np.sin(phis[j])
     self.targets = traj
-
